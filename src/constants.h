@@ -107,7 +107,9 @@ enum Squares {
 #define ASSERTS                         true // If true the asserts are used. The asserts are automatically implemented in the code if this is true.
 #define LOGROOTMOVEDEPTH                127 // The depth at which the root moves are logged. Setting this to >= 128 will disable logging.
 
-#define USE_PEXT                       // If defined, the BMI2 instruction set is used for magic bitboards. Make sure your CPU supports it!
+// USE_PEXT is intentionally disabled by default: it requires x86 BMI2 and is not
+// available on ARM64. Enable it explicitly only for a compatible x86 BMI2 build.
+// #define USE_PEXT
 
 struct TunableParam {
     std::string name;

@@ -36,6 +36,8 @@ else ifeq ($(CPU), znver2)
     CPU_FLAGS := -march=znver2
 else ifeq ($(CPU), native)
     CPU_FLAGS := -march=native
+else ifeq ($(CPU), armv8-a+simd)
+    CPU_FLAGS := -march=armv8-a+simd
 else
     $(error "Unknown CPU architecture: $(CPU)")
 endif
