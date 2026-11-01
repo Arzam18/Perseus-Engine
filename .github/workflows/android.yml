@@ -13,7 +13,7 @@ permissions:
 
 jobs:
   build:
-    name: Build Perseus arm64-v8a (NEON)
+    name: Build Perseus Android ARM64 NEON
     runs-on: ubuntu-24.04
     steps:
       - name: Checkout source
@@ -25,23 +25,32 @@ jobs:
           ndk-version: r27c
           add-to-path: true
 
-      - name: Build Android ARM64 NEON executable
+      - name: Build Android ARM64 executable
         shell: bash
         run: |
           set -euo pipefail
           TOOLCHAIN="$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin"
-          test -x "$TOOLCHAIN/aarch64-linux-android24-clang++"
+          CXX="$TOOLCHAIN/aarch64-linux-android24-clang++"
+          test -x "$CXX"
           make -C src clean
           make -C src release \
-            CXX="$TOOLCHAIN/aarch64-linux-android24-clang++" \
+            CXX="$CXX" \
             CPU=armv8-a+simd \
-            CXXFLAGS_EXTRA=''
+            CXXFLAGS_EXTRA='-fno-exceptions -DNDEBUG -O3 -flto' \
+            LDFLAGS_EXTRA='-static-libstdc++ -Wl,--gc-sections'
           mkdir -p dist
           cp src/Perseus dist/Perseus-android-arm64
-          chmod +x dist/Perseus-android-arm64
+          chmod 755 dist/Perseus-android-arm64
+          echo '=== Verify architecture ==='
           file dist/Perseus-android-arm64
           readelf -h dist/Perseus-android-arm64 | grep -E 'Class:|Machine:'
           readelf -l dist/Perseus-android-arm64 | grep -E 'INTERP|Requesting program interpreter' || true
+          echo '=== Verify dynamic dependencies ==='
+          readelf -d dist/Perseus-android-arm64 | grep NEEDED || true
+          readelf -h dist/Perseus-android-arm64 | grep -q 'AArch64' || { echo 'ERROR: output is not AArch64'; exit 1; }
+          if readelf -l dist/Perseus-android-arm64 | grep -q 'Requesting program interpreter.*ld-linux'; then
+            echo 'ERROR: output uses a GNU/Linux dynamic linker'; exit 1
+          fi
 
       - name: Upload Android ARM64 executable
         uses: actions/upload-artifact@v4
