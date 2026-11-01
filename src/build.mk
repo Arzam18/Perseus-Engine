@@ -13,6 +13,7 @@ endif
 
 CXX ?= clang++
 CXXFLAGS := -Wall -Wextra -Wpedantic -std=c++20 -Wno-implicit-fallthrough
+CXXFLAGS += $(CXXFLAGS_EXTRA)
 EXE ?= Perseus
 CPU ?= default
 
@@ -63,7 +64,7 @@ $(OBJ_DIR)/%.o: %.cpp
 
 link: $(OBJ_FILES)
 	@echo "Linking"
-	@$(CXX) $(CXXFLAGS) $(LINKER) $(OBJ_FILES) -o $(EXE)
+	@$(CXX) $(CXXFLAGS) $(LINKER) $(OBJ_FILES) $(LDFLAGS_EXTRA) -o $(EXE)
 
 clean:
 	@echo "Cleaning"
