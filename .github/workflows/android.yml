@@ -1,0 +1,51 @@
+name: Build Perseus Android ARM64
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'src/**'
+      - 'makefile'
+      - '.github/workflows/android.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build Perseus arm64-v8a (NEON)
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Install Android NDK
+        uses: nttld/setup-ndk@v1
+        with:
+          ndk-version: r27c
+          add-to-path: true
+
+      - name: Build Android ARM64 NEON executable
+        shell: bash
+        run: |
+          set -euo pipefail
+          TOOLCHAIN="$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin"
+          test -x "$TOOLCHAIN/aarch64-linux-android24-clang++"
+          make -C src clean
+          make -C src release \
+            CXX="$TOOLCHAIN/aarch64-linux-android24-clang++" \
+            CPU=armv8-a+simd \
+            CXXFLAGS_EXTRA=''
+          mkdir -p dist
+          cp src/Perseus dist/Perseus-android-arm64
+          chmod +x dist/Perseus-android-arm64
+          file dist/Perseus-android-arm64
+          readelf -h dist/Perseus-android-arm64 | grep -E 'Class:|Machine:'
+          readelf -l dist/Perseus-android-arm64 | grep -E 'INTERP|Requesting program interpreter' || true
+
+      - name: Upload Android ARM64 executable
+        uses: actions/upload-artifact@v4
+        with:
+          name: Perseus-android-arm64-neon
+          path: dist/Perseus-android-arm64
+          if-no-files-found: error
